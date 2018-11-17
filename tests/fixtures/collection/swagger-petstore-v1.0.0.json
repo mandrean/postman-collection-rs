@@ -1,0 +1,655 @@
+{
+	"id": "5f8d7d62-dc52-4d94-8d76-b65da527327e",
+	"name": "Swagger Petstore",
+	"description": "This is a sample server Petstore server.  You can find out more about Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).  For this sample, you can use the api key `special-key` to test the authorization filters.",
+	"auth": null,
+	"events": null,
+	"variables": [],
+	"order": [],
+	"folders_order": [
+		"ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+		"b5852433-9034-4443-a5f2-41da35d7a3bf",
+		"21d9310b-679e-42bc-a5a4-76abbad2b123"
+	],
+	"folders": [
+		{
+			"id": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"name": "pet",
+			"description": "Folder for pet",
+			"auth": null,
+			"events": null,
+			"collection": "5f8d7d62-dc52-4d94-8d76-b65da527327e",
+			"folder": null,
+			"order": [
+				"651111f1-006b-464f-b137-f8ed24a8be53",
+				"5eee6c18-24a6-4f66-8ac0-a194e238ffce",
+				"1f732f53-7d11-4dac-b939-b418f7e41321",
+				"f67cfd81-823b-4900-aef1-d79522f6b6bf",
+				"0068d8fe-3c92-4600-a173-193757505b16",
+				"3e08b2a0-de95-4393-895a-8d90d1f236bc",
+				"c5eb1b04-9a03-419e-be14-b3e5fcccad4c",
+				"e4941944-b980-400d-aeb5-970a71a4c088"
+			],
+			"folders_order": []
+		},
+		{
+			"id": "b5852433-9034-4443-a5f2-41da35d7a3bf",
+			"name": "store",
+			"description": "Folder for store",
+			"auth": null,
+			"events": null,
+			"collection": "5f8d7d62-dc52-4d94-8d76-b65da527327e",
+			"folder": null,
+			"order": [
+				"a12d4dae-9860-40b9-8966-0fc7f9aa5c21",
+				"34b9f506-b8d8-4910-afdd-9d1fc2664453",
+				"43d6b4f1-4d0b-468e-a5e9-844a293ac36e",
+				"8dba6453-3f78-421e-82a4-5e986f7b0469"
+			],
+			"folders_order": []
+		},
+		{
+			"id": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"name": "user",
+			"description": "Folder for user",
+			"auth": null,
+			"events": null,
+			"collection": "5f8d7d62-dc52-4d94-8d76-b65da527327e",
+			"folder": null,
+			"order": [
+				"e8d6b843-c6c1-4aed-87aa-aef6be69565b",
+				"5b524be1-2308-453c-9dac-3af5fb2b44d6",
+				"853bed75-6b5a-4b1e-9c03-82bf9a8716d5",
+				"d2fdc326-c94c-4d4b-a4fe-9dc9338aa4ef",
+				"33327375-c8f3-4c4b-b223-257ab458f857",
+				"5f5d9aee-ad4f-45e6-a19f-1010dabdf2f6",
+				"3ff0a38e-005d-4d03-a7bc-e4de01aa9691",
+				"20cb4219-12b2-4638-970f-0808ca100892"
+			],
+			"folders_order": []
+		}
+	],
+	"requests": [
+		{
+			"id": "0068d8fe-3c92-4600-a173-193757505b16",
+			"name": "Find pet by ID",
+			"url": "https://petstore.swagger.io/v2/pet/:petId",
+			"description": "Returns a single pet",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [
+				{
+					"key": "petId",
+					"value": "{{petId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"petId": "{{petId}}"
+			}
+		},
+		{
+			"id": "1f732f53-7d11-4dac-b939-b418f7e41321",
+			"name": "Finds Pets by status",
+			"url": "https://petstore.swagger.io/v2/pet/findByStatus?status={{status}}",
+			"description": "Multiple status values can be provided with comma separated strings",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "20cb4219-12b2-4638-970f-0808ca100892",
+			"name": "Delete user",
+			"url": "https://petstore.swagger.io/v2/user/:username",
+			"description": "This can only be done by the logged in user.",
+			"data": [],
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "DELETE",
+			"pathVariableData": [
+				{
+					"key": "username",
+					"value": "{{username}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"username": "{{username}}"
+			}
+		},
+		{
+			"id": "33327375-c8f3-4c4b-b223-257ab458f857",
+			"name": "Logs out current logged in user session",
+			"url": "https://petstore.swagger.io/v2/user/logout",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "34b9f506-b8d8-4910-afdd-9d1fc2664453",
+			"name": "Place an order for a pet",
+			"url": "https://petstore.swagger.io/v2/store/order",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "b5852433-9034-4443-a5f2-41da35d7a3bf",
+			"rawModeData": "order placed for purchasing the pet",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "3e08b2a0-de95-4393-895a-8d90d1f236bc",
+			"name": "Updates a pet in the store with form data",
+			"url": "https://petstore.swagger.io/v2/pet/:petId",
+			"description": "",
+			"data": [
+				{
+					"key": "name",
+					"value": "{{name}}",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "status",
+					"value": "{{status}}",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"dataMode": "urlencoded",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/x-www-form-urlencoded",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [
+				{
+					"key": "petId",
+					"value": "{{petId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/xml, application/json\nContent-Type: application/x-www-form-urlencoded\n",
+			"pathVariables": {
+				"petId": "{{petId}}"
+			}
+		},
+		{
+			"id": "3ff0a38e-005d-4d03-a7bc-e4de01aa9691",
+			"name": "Updated user",
+			"url": "https://petstore.swagger.io/v2/user/:username",
+			"description": "This can only be done by the logged in user.",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "PUT",
+			"pathVariableData": [
+				{
+					"key": "username",
+					"value": "{{username}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"rawModeData": "Updated user object",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"username": "{{username}}"
+			}
+		},
+		{
+			"id": "43d6b4f1-4d0b-468e-a5e9-844a293ac36e",
+			"name": "Find purchase order by ID",
+			"url": "https://petstore.swagger.io/v2/store/order/:orderId",
+			"description": "For valid response try integer IDs with value >= 1 and <= 10. Other values will generated exceptions",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [
+				{
+					"key": "orderId",
+					"value": "{{orderId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "b5852433-9034-4443-a5f2-41da35d7a3bf",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"orderId": "{{orderId}}"
+			}
+		},
+		{
+			"id": "5b524be1-2308-453c-9dac-3af5fb2b44d6",
+			"name": "Creates list of users with given input array",
+			"url": "https://petstore.swagger.io/v2/user/createWithArray",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"rawModeData": "List of user object",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "5eee6c18-24a6-4f66-8ac0-a194e238ffce",
+			"name": "Add a new pet to the store",
+			"url": "https://petstore.swagger.io/v2/pet",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"rawModeData": "Pet object that needs to be added to the store",
+			"headers": "Accept: application/xml, application/json\nContent-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "5f5d9aee-ad4f-45e6-a19f-1010dabdf2f6",
+			"name": "Get user by user name",
+			"url": "https://petstore.swagger.io/v2/user/:username",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [
+				{
+					"key": "username",
+					"value": "{{username}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"username": "{{username}}"
+			}
+		},
+		{
+			"id": "651111f1-006b-464f-b137-f8ed24a8be53",
+			"name": "Update an existing pet",
+			"url": "https://petstore.swagger.io/v2/pet",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "application/json",
+					"enabled": true
+				}
+			],
+			"method": "PUT",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"rawModeData": "Pet object that needs to be added to the store",
+			"headers": "Accept: application/xml, application/json\nContent-Type: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "853bed75-6b5a-4b1e-9c03-82bf9a8716d5",
+			"name": "Creates list of users with given input array",
+			"url": "https://petstore.swagger.io/v2/user/createWithList",
+			"description": "",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"rawModeData": "List of user object",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "8dba6453-3f78-421e-82a4-5e986f7b0469",
+			"name": "Delete purchase order by ID",
+			"url": "https://petstore.swagger.io/v2/store/order/:orderId",
+			"description": "For valid response try integer IDs with positive integer value. Negative or non-integer values will generate API errors",
+			"data": [],
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "DELETE",
+			"pathVariableData": [
+				{
+					"key": "orderId",
+					"value": "{{orderId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "b5852433-9034-4443-a5f2-41da35d7a3bf",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {
+				"orderId": "{{orderId}}"
+			}
+		},
+		{
+			"id": "a12d4dae-9860-40b9-8966-0fc7f9aa5c21",
+			"name": "Returns pet inventories by status",
+			"url": "https://petstore.swagger.io/v2/store/inventory",
+			"description": "Returns a map of status codes to quantities",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "b5852433-9034-4443-a5f2-41da35d7a3bf",
+			"headers": "Accept: application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "c5eb1b04-9a03-419e-be14-b3e5fcccad4c",
+			"name": "Deletes a pet",
+			"url": "https://petstore.swagger.io/v2/pet/:petId",
+			"description": "",
+			"data": [],
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				},
+				{
+					"key": "api_key",
+					"value": "{{api_key}}",
+					"enabled": true
+				}
+			],
+			"method": "DELETE",
+			"pathVariableData": [
+				{
+					"key": "petId",
+					"value": "{{petId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/xml, application/json\napi_key: {{api_key}}\n",
+			"pathVariables": {
+				"petId": "{{petId}}"
+			}
+		},
+		{
+			"id": "d2fdc326-c94c-4d4b-a4fe-9dc9338aa4ef",
+			"name": "Logs user into the system",
+			"url": "https://petstore.swagger.io/v2/user/login?username={{username}}&password={{password}}",
+			"description": "",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "e4941944-b980-400d-aeb5-970a71a4c088",
+			"name": "uploads an image",
+			"url": "https://petstore.swagger.io/v2/pet/:petId/uploadImage",
+			"description": "",
+			"data": [
+				{
+					"key": "additionalMetadata",
+					"value": "{{additionalMetadata}}",
+					"type": "text",
+					"enabled": true
+				},
+				{
+					"key": "file",
+					"value": "{{file}}",
+					"type": "text",
+					"enabled": true
+				}
+			],
+			"dataMode": "params",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/json",
+					"enabled": true
+				},
+				{
+					"key": "Content-Type",
+					"value": "multipart/form-data",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [
+				{
+					"key": "petId",
+					"value": "{{petId}}"
+				}
+			],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/json\nContent-Type: multipart/form-data\n",
+			"pathVariables": {
+				"petId": "{{petId}}"
+			}
+		},
+		{
+			"id": "e8d6b843-c6c1-4aed-87aa-aef6be69565b",
+			"name": "Create user",
+			"url": "https://petstore.swagger.io/v2/user",
+			"description": "This can only be done by the logged in user.",
+			"data": [],
+			"dataMode": "raw",
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "POST",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "21d9310b-679e-42bc-a5a4-76abbad2b123",
+			"rawModeData": "Created user object",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		},
+		{
+			"id": "f67cfd81-823b-4900-aef1-d79522f6b6bf",
+			"name": "Finds Pets by tags",
+			"url": "https://petstore.swagger.io/v2/pet/findByTags?tags={{tags}}",
+			"description": "Muliple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
+			"data": null,
+			"dataMode": null,
+			"headerData": [
+				{
+					"key": "Accept",
+					"value": "application/xml, application/json",
+					"enabled": true
+				}
+			],
+			"method": "GET",
+			"pathVariableData": [],
+			"queryParams": null,
+			"auth": null,
+			"events": null,
+			"folder": "ea4f0032-8d4b-4ae7-a2dc-cbf4cbcf4634",
+			"headers": "Accept: application/xml, application/json\n",
+			"pathVariables": {}
+		}
+	]
+}
