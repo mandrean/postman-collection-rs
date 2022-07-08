@@ -1,6 +1,6 @@
-extern crate serde_json;
-
 use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Spec {

@@ -1,4 +1,3 @@
-extern crate postman_collection;
 
 use postman_collection::PostmanCollection;
 use std::io::Write;
