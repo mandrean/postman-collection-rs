@@ -1,6 +1,6 @@
+use std::io::Write;
 
 use postman_collection::PostmanCollection;
-use std::io::Write;
 
 fn main() {
     if let Some(path) = std::env::args().nth(1) {
