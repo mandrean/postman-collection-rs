@@ -443,7 +443,14 @@ pub struct FormParameter {
     pub value: Option<String>,
 
     #[serde(rename = "src")]
-    pub src: Option<String>,
+    pub src: Option<FormParameterSrcUnion>,
+}
+
+#[serde(untagged)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub enum FormParameterSrcUnion {
+    File(String),
+    Files(Vec<String>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
