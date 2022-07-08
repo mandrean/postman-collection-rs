@@ -1,41 +1,32 @@
-#[macro_use]
-extern crate error_chain;
-#[macro_use]
-extern crate serde_derive;
-#[cfg(test)]
-extern crate glob;
-extern crate semver;
-extern crate serde;
-extern crate serde_json;
-extern crate serde_yaml;
-extern crate url;
-extern crate url_serde;
+use std::{fs::File, io::Read, path::Path};
 
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
+pub use errors::{Result, ResultExt};
+use serde::{Deserialize, Serialize};
 
 pub mod v1_0_0;
 pub mod v2_0_0;
 pub mod v2_1_0;
-pub use errors::{Result, ResultExt};
 
 const MINIMUM_POSTMAN_COLLECTION_VERSION: &str = ">= 1.0.0";
 
 /// Errors that Postman Collection functions may return
 pub mod errors {
+    use error_chain::error_chain;
+
+    use crate::MINIMUM_POSTMAN_COLLECTION_VERSION;
+
     error_chain! {
         foreign_links {
             Io(::std::io::Error);
             Yaml(::serde_yaml::Error);
             Serialize(::serde_json::Error);
-            SemVerError(::semver::SemVerError);
+            SemVerError(::semver::Error);
         }
 
         errors {
             UnsupportedSpecFileVersion(version: ::semver::Version) {
                 description("Unsupported Postman Collection file version")
-                display("Unsupported Postman Collection file version ({}). Expected {}", version, ::MINIMUM_POSTMAN_COLLECTION_VERSION)
+                display("Unsupported Postman Collection file version ({}). Expected {}", version, MINIMUM_POSTMAN_COLLECTION_VERSION)
             }
         }
     }
