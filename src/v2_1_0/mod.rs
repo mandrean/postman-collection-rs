@@ -450,6 +450,7 @@ pub struct FormParameter {
 #[serde(untagged)]
 pub enum FormParameterSrcUnion {
     File(String),
+
     Files(Vec<String>),
 }
 
