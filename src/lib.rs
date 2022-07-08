@@ -87,10 +87,12 @@ pub fn to_json(spec: &PostmanCollection) -> errors::Result<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use glob::glob;
     use std::fs::File;
     use std::io::Write;
+
+    use glob::glob;
+
+    use super::*;
 
     /// Helper function for reading a file to string.
     fn read_file<P>(path: P) -> String
@@ -178,7 +180,8 @@ mod tests {
     // Just tests if the deserialization does not blow up. But does not test correctness
     #[test]
     fn can_deserialize() {
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern") {
+        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
+        {
             let entry = entry.unwrap();
             let path = entry.as_path();
             // cargo test -- --nocapture to see this message
@@ -195,14 +198,15 @@ mod tests {
                 .collect();
         let mut invalid_diffs = Vec::new();
 
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern") {
+        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
+        {
             let entry = entry.unwrap();
             let path = entry.as_path();
 
             println!("Testing if {:?} is deserializable", path);
 
             let (api_filename, parsed_spec_json_str, spec_json_str) =
-                compare_spec_through_json(&path, &save_path_base);
+                compare_spec_through_json(path, &save_path_base);
 
             if parsed_spec_json_str != spec_json_str {
                 invalid_diffs.push((api_filename, parsed_spec_json_str, spec_json_str));

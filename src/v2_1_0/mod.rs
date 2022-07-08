@@ -446,8 +446,8 @@ pub struct FormParameter {
     pub src: Option<FormParameterSrcUnion>,
 }
 
-#[serde(untagged)]
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
 pub enum FormParameterSrcUnion {
     File(String),
     Files(Vec<String>),

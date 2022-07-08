@@ -1,4 +1,3 @@
-//use serde_json::value::RawValue;
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -504,7 +503,6 @@ pub struct HelperClass {
     /// The helper type. Either `awsSigV4`, `basic`, `bearer`, `digest`, `hawk`, `ntlm`, `oAuth1`, or `oAuth2`.
     #[serde(rename = "id")]
     pub id: Option<HelperType>,
-
     /* TODO: Get boxed raw values working
     /// The attributes for [AWS Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html). e.g.
     /// accessKey, secretKey, region, service.
