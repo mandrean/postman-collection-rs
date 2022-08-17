@@ -26,6 +26,10 @@ pub struct Spec {
 /// Represents authentication helpers provided by Postman
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Auth {
+    /// The attributes for [API key Auth](https://en.wikipedia.org/wiki/API_key).
+    #[serde(rename = "apikey")]
+    pub api_key: Option<HashMap<String, Option<serde_json::Value>>>,
+
     /// The attributes for [AWS
     /// Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html). e.g.
     /// accessKey, secretKey, region, service.
@@ -751,6 +755,9 @@ pub enum ResponseTime {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum AuthType {
+    #[serde(rename = "apikey")]
+    Apikey,
+
     #[serde(rename = "awsv4")]
     Awsv4,
 
