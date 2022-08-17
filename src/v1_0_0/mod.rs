@@ -69,13 +69,17 @@ pub struct Spec {
 /// Represents authentication helpers provided by Postman
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Auth {
-    /// The auth type. Either `noauth`, `awsv4`, `basic`, `bearer`, `digest`, `hawk`, `ntlm`, `oauth1`, or `oauth2`.
+    /// The auth type. Either `noauth`, `apikey`, `awsv4`, `basic`, `bearer`, `digest`, `hawk`, `ntlm`, `oauth1`, or `oauth2`.
     #[serde(rename = "type")]
     pub auth_type: AuthType,
 
     /// No authentication
     #[serde(rename = "noauth")]
     pub noauth: Option<serde_json::Value>,
+
+    /// The attributes for [API key Auth](https://en.wikipedia.org/wiki/API_key).
+    #[serde(rename = "apikey")]
+    pub api_key: Option<Vec<AuthAttribute>>,
 
     /// The attributes for [AWS Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html).
     #[serde(rename = "awsv4")]
@@ -888,6 +892,9 @@ pub enum Time {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum AuthType {
+    #[serde(rename = "apikey")]
+    Apikey,
+
     #[serde(rename = "awsv4")]
     Awsv4,
 
