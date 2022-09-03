@@ -1,7 +1,7 @@
 [package]
 name = "postman_collection"
-version = "0.2.0"
-authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>"]
+version = "0.3.0"
+authors = ["Sebastian Mandrean <sebastian.mandrean@gmail.com>", "Marlon Brandão de Sousa <marlon.bsousa@gmail.com>"]
 description = "A Postman Collection serialization & deserialization library."
 edition = "2021"
 license = "MIT"

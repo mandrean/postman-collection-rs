@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Spec {
@@ -399,6 +400,10 @@ pub struct Body {
 
     #[serde(rename = "formdata")]
     pub formdata: Option<Vec<FormParameter>>,
+
+    /// as per postman specification, the only information provided for the graphql field is that it is a json object
+    #[serde(rename = "graphql")]
+    pub graphql: Option<Value>,
 
     /// Postman stores the type of data associated with this request in this field.
     #[serde(rename = "mode")]
@@ -821,6 +826,9 @@ pub enum VariableType {
 pub enum Mode {
     #[serde(rename = "file")]
     File,
+
+    #[serde(rename = "graphql")]
+    Graphql,
 
     #[serde(rename = "formdata")]
     Formdata,
