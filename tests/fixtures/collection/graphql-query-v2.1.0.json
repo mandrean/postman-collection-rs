@@ -1,0 +1,57 @@
+{
+    "info": {
+        "name": "GraphQL test schema",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "GraphQL APIs are an efficient alternative to the rest APIs. They allow fetch customized responses or retrieve data of nested or multiple resources through a single API request. This example is based on Contentstack GraphQL Postman Collection at https://raw.githubusercontent.com/contentstack/contentstack-postman-collections/collections/graphql-collection.json."
+    },
+    "item": [
+        {
+            "name": "Get a List of Assets",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "access_token",
+                        "value": "{{access_token}}",
+                        "disabled": false
+                    }
+                ],
+                "body": {
+                    "mode": "graphql",
+                    "graphql": {
+                        "query": "query {\n  all_assets(\n    locale: \"en-us\"\n  ) {\n    total\n    items {\n      title\n      url\n      file_size\n    }\n  }\n}",
+                        "variables": null
+                    }
+                },
+                "description": "sample query graph",
+                "url": {
+                    "protocol": "https",
+                    "host": "{{base_url}}",
+                    "path": "/list",
+                    "query": [
+                        {
+                            "key": "environment",
+                            "value": "{{environment}}"
+                        },
+                        {
+                            "key": "limit",
+                            "value": "",
+                            "disabled": true
+                        },
+                        {
+                            "key": "skip",
+                            "value": "",
+                            "disabled": true
+                        },
+                        {
+                            "key": "skip_content_type_uids",
+                            "value": "",
+                            "disabled": true
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "event": []
+}

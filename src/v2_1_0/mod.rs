@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Spec {
@@ -24,6 +25,10 @@ pub struct Spec {
 /// Represents authentication helpers provided by Postman
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub struct Auth {
+    /// The attributes for API Key Authentication.
+    #[serde(rename = "apikey")]
+    pub apikey: Option<Vec<AuthAttribute>>,
+
     /// The attributes for [AWS
     /// Auth](http://docs.aws.amazon.com/AmazonS3/latest/dev/RESTAuthentication.html).
     #[serde(rename = "awsv4")]
@@ -43,6 +48,10 @@ pub struct Auth {
     /// Authentication](https://en.wikipedia.org/wiki/Digest_access_authentication).
     #[serde(rename = "digest")]
     pub digest: Option<Vec<AuthAttribute>>,
+
+    /// The attributes for [Akamai EdgeGrid Authentication](https://developer.akamai.com/legacy/introduction/Client_Auth.html).
+    #[serde(rename = "edgegrid")]
+    pub edgegrid: Option<Vec<AuthAttribute>>,
 
     /// The attributes for [Hawk Authentication](https://github.com/hueniverse/hawk)
     #[serde(rename = "hawk")]
@@ -400,6 +409,10 @@ pub struct Body {
     #[serde(rename = "formdata")]
     pub formdata: Option<Vec<FormParameter>>,
 
+    /// as per postman specification, the only information provided for the graphql field is that it is a json object
+    #[serde(rename = "graphql")]
+    pub graphql: Option<Value>,
+
     /// Postman stores the type of data associated with this request in this field.
     #[serde(rename = "mode")]
     pub mode: Option<Mode>,
@@ -409,6 +422,10 @@ pub struct Body {
 
     #[serde(rename = "urlencoded")]
     pub urlencoded: Option<Vec<UrlEncodedParameter>>,
+
+    /// Additional configurations and options set for various body modes
+    #[serde(rename = "options")]
+    pub options: Option<serde_json::value::Value>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -482,7 +499,7 @@ pub struct Certificate {
 
     /// A list of Url match pattern strings, to identify Urls this certificate can be used for.
     #[serde(rename = "matches")]
-    pub matches: Option<Vec<Option<serde_json::Value>>>,
+    pub matches: Option<Vec<String>>,
 
     /// A name for the certificate for user reference
     #[serde(rename = "name")]
@@ -583,6 +600,10 @@ pub struct ResponseClass {
     /// response is manually created, this can be set to `null`.
     #[serde(rename = "responseTime")]
     pub response_time: Option<ResponseTime>,
+
+    /// Set of timing information related to request and response in milliseconds
+    #[serde(rename = "timings")]
+    pub timings: Option<serde_json::value::Value>,
 
     /// The response status, e.g: '200 OK'
     #[serde(rename = "status")]
@@ -765,6 +786,9 @@ pub enum ResponseTime {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 pub enum AuthType {
+    #[serde(rename = "apikey")]
+    Apikey,
+
     #[serde(rename = "awsv4")]
     Awsv4,
 
@@ -776,6 +800,9 @@ pub enum AuthType {
 
     #[serde(rename = "digest")]
     Digest,
+
+    #[serde(rename = "edgegrid")]
+    Edgegrid,
 
     #[serde(rename = "hawk")]
     Hawk,
@@ -821,6 +848,9 @@ pub enum VariableType {
 pub enum Mode {
     #[serde(rename = "file")]
     File,
+
+    #[serde(rename = "graphql")]
+    Graphql,
 
     #[serde(rename = "formdata")]
     Formdata,

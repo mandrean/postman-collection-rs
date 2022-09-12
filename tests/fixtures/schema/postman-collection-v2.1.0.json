@@ -36,6 +36,9 @@
                     "$ref": "#/definitions/auth"
                 }
             ]
+        },
+        "protocolProfileBehavior": {
+            "$ref": "#/definitions/protocol-profile-behavior"
         }
     },
     "required": [
@@ -70,10 +73,12 @@
                 "type": {
                     "type": "string",
                     "enum": [
+                        "apikey",
                         "awsv4",
                         "basic",
                         "bearer",
                         "digest",
+                        "edgegrid",
                         "hawk",
                         "noauth",
                         "oauth1",
@@ -82,6 +87,14 @@
                     ]
                 },
                 "noauth": {},
+                "apikey": {
+                    "type": "array",
+                    "title": "API Key Authentication",
+                    "description": "The attributes for API Key Authentication.",
+                    "items": {
+                        "$ref": "#/definitions/auth-attribute"
+                    }
+                },
                 "awsv4": {
                     "type": "array",
                     "title": "AWS Signature v4",
@@ -110,6 +123,14 @@
                     "type": "array",
                     "title": "Digest Authentication",
                     "description": "The attributes for [Digest Authentication](https://en.wikipedia.org/wiki/Digest_access_authentication).",
+                    "items": {
+                        "$ref": "#/definitions/auth-attribute"
+                    }
+                },
+                "edgegrid": {
+                    "type": "array",
+                    "title": "EdgeGrid Authentication",
+                    "description": "The attributes for [Akamai EdgeGrid Authentication](https://developer.akamai.com/legacy/introduction/Client_Auth.html).",
                     "items": {
                         "$ref": "#/definitions/auth-attribute"
                     }
@@ -173,7 +194,7 @@
                 "matches": {
                     "description": "A list of Url match pattern strings, to identify Urls this certificate can be used for.",
                     "type": "array",
-                    "item": {
+                    "items": {
                         "type": "string",
                         "description": "An Url match pattern string"
                     }
@@ -450,6 +471,9 @@
                             "$ref": "#/definitions/auth"
                         }
                     ]
+                },
+                "protocolProfileBehavior": {
+                    "$ref": "#/definitions/protocol-profile-behavior"
                 }
             },
             "required": [
@@ -490,21 +514,19 @@
                     }
                 },
                 "protocolProfileBehavior": {
-                    "type": "object",
-                    "title": "Protocol Profile Behavior",
-                    "description": "Set of configurations used to alter the usual behavior of sending the request",
-                    "properties": {
-                        "disableBodyPruning": {
-                            "type": "boolean",
-                            "default": false,
-                            "description": "Disable body pruning for GET, COPY, HEAD, PURGE and UNLOCK request methods."
-                        }
-                    }
+                    "$ref": "#/definitions/protocol-profile-behavior"
                 }
             },
             "required": [
                 "request"
             ]
+        },
+        "protocol-profile-behavior": {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "title": "Protocol Profile Behavior",
+            "$id": "#/definitions/protocol-profile-behavior",
+            "description": "Set of configurations used to alter the usual behavior of sending the request"
         },
         "proxy-config": {
             "$schema": "http://json-schema.org/draft-07/schema#",
@@ -623,11 +645,15 @@
                                                 "raw",
                                                 "urlencoded",
                                                 "formdata",
-                                                "file"
+                                                "file",
+                                                "graphql"
                                             ]
                                         },
                                         "raw": {
                                             "type": "string"
+                                        },
+                                        "graphql": {
+                                            "type": "object"
                                         },
                                         "urlencoded": {
                                             "type": "array",
@@ -659,7 +685,7 @@
                                             "items": {
                                                 "type": "object",
                                                 "title": "FormParameter",
-                                                "oneOf": [
+                                                "anyOf": [
                                                     {
                                                         "properties": {
                                                             "key": {
@@ -696,6 +722,7 @@
                                                             },
                                                             "src": {
                                                                 "type": [
+                                                                    "array",
                                                                     "string",
                                                                     "null"
                                                                 ]
@@ -744,6 +771,10 @@
                                                 }
                                             }
                                         },
+                                        "options": {
+                                            "type": "object",
+                                            "description": "Additional configurations and options set for various body modes."
+                                        },
                                         "disabled": {
                                             "type": "boolean",
                                             "default": false,
@@ -785,6 +816,14 @@
                     ],
                     "description": "The time taken by the request to complete. If a number, the unit is milliseconds. If the response is manually created, this can be set to `null`."
                 },
+                "timings": {
+                    "title": "Response Timings",
+                    "description": "Set of timing information related to request and response in milliseconds",
+                    "type": [
+                        "object",
+                        "null"
+                    ]
+                },
                 "header": {
                     "title": "Headers",
                     "oneOf": [
@@ -819,7 +858,10 @@
                     }
                 },
                 "body": {
-                    "type": "string",
+                    "type": [
+                        "null",
+                        "string"
+                    ],
                     "description": "The raw text of the response."
                 },
                 "status": {

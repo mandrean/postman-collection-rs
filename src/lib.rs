@@ -180,7 +180,7 @@ mod tests {
     // Just tests if the deserialization does not blow up. But does not test correctness
     #[test]
     fn can_deserialize() {
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
+        for entry in glob("tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
         {
             let entry = entry.unwrap();
             let path = entry.as_path();
@@ -198,7 +198,7 @@ mod tests {
                 .collect();
         let mut invalid_diffs = Vec::new();
 
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
+        for entry in glob("tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
         {
             let entry = entry.unwrap();
             let path = entry.as_path();

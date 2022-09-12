@@ -13,7 +13,7 @@ Add the following to your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-postman_collection = "0.1"
+postman_collection = "0.3"
 ```
 
 Use
