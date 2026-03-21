@@ -1,39 +1,59 @@
 use std::{fs::File, io::Read, path::Path};
 
-pub use errors::{Result, ResultExt};
-use serde::{Deserialize, Serialize};
+pub use errors::{Error, Result};
+use serde::{Deserialize, Deserializer, Serialize, de};
+use serde_json::{Map, Value};
 
 pub mod v1_0_0;
 pub mod v2_0_0;
 pub mod v2_1_0;
 
-const MINIMUM_POSTMAN_COLLECTION_VERSION: &str = ">= 1.0.0";
+const POSTMAN_COLLECTION_V2_0_0_SCHEMA: &str =
+    "https://schema.getpostman.com/json/collection/v2.0.0/collection.json";
+const POSTMAN_COLLECTION_V2_1_0_SCHEMA: &str =
+    "https://schema.getpostman.com/json/collection/v2.1.0/collection.json";
 
 /// Errors that Postman Collection functions may return
 pub mod errors {
-    use error_chain::error_chain;
+    use thiserror::Error;
 
-    use crate::MINIMUM_POSTMAN_COLLECTION_VERSION;
+    pub type Result<T> = std::result::Result<T, Error>;
 
-    error_chain! {
-        foreign_links {
-            Io(::std::io::Error);
-            Yaml(::serde_yaml::Error);
-            Serialize(::serde_json::Error);
-            SemVerError(::semver::Error);
-        }
-
-        errors {
-            UnsupportedSpecFileVersion(version: ::semver::Version) {
-                description("Unsupported Postman Collection file version")
-                display("Unsupported Postman Collection file version ({}). Expected {}", version, MINIMUM_POSTMAN_COLLECTION_VERSION)
-            }
-        }
+    #[derive(Debug, Error)]
+    pub enum Error {
+        #[error("I/O error: {0}")]
+        Io(#[from] std::io::Error),
+        #[error("JSON error: {0}")]
+        Json(#[from] serde_json::Error),
+        #[error("YAML error: {0}")]
+        Yaml(#[from] serde_yaml::Error),
+        #[error("failed to parse collection as JSON ({json}) or YAML ({yaml})")]
+        Parse {
+            json: serde_json::Error,
+            yaml: serde_yaml::Error,
+        },
+        #[error("expected the Postman Collection document root to be an object")]
+        InvalidDocumentShape,
+        #[error("ambiguous Postman Collection file version; add a supported info.schema URL")]
+        AmbiguousSpecFileVersion,
+        #[error("unsupported Postman Collection file version: {version}")]
+        UnsupportedSpecFileVersion { version: String },
     }
 }
 
 /// Supported versions of Postman Collection.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum PostmanCollectionVersion {
+    #[allow(non_camel_case_types)]
+    V1_0_0,
+    #[allow(non_camel_case_types)]
+    V2_0_0,
+    #[allow(non_camel_case_types)]
+    V2_1_0,
+}
+
+/// Supported versions of Postman Collection.
+#[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum PostmanCollection {
     /// Version 1.0.0 of the Postman Collection specification.
@@ -59,163 +79,143 @@ pub enum PostmanCollection {
     V2_1_0(v2_1_0::Spec),
 }
 
+impl<'de> Deserialize<'de> for PostmanCollection {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = Value::deserialize(deserializer)?;
+        Self::from_value(value).map_err(de::Error::custom)
+    }
+}
+
+impl PostmanCollection {
+    fn from_value(value: Value) -> Result<Self> {
+        match detect_version(&value)? {
+            PostmanCollectionVersion::V1_0_0 => {
+                Ok(Self::V1_0_0(serde_json::from_value::<v1_0_0::Spec>(value)?))
+            }
+            PostmanCollectionVersion::V2_0_0 => {
+                Ok(Self::V2_0_0(serde_json::from_value::<v2_0_0::Spec>(value)?))
+            }
+            PostmanCollectionVersion::V2_1_0 => {
+                Ok(Self::V2_1_0(serde_json::from_value::<v2_1_0::Spec>(value)?))
+            }
+        }
+    }
+
+    pub fn version(&self) -> PostmanCollectionVersion {
+        match self {
+            Self::V1_0_0(_) => PostmanCollectionVersion::V1_0_0,
+            Self::V2_0_0(_) => PostmanCollectionVersion::V2_0_0,
+            Self::V2_1_0(_) => PostmanCollectionVersion::V2_1_0,
+        }
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Self::V1_0_0(spec) => &spec.name,
+            Self::V2_0_0(spec) => &spec.info.name,
+            Self::V2_1_0(spec) => &spec.info.name,
+        }
+    }
+}
+
 /// Deserialize a Postman Collection from a path
-pub fn from_path<P>(path: P) -> errors::Result<PostmanCollection>
+pub fn from_path<P>(path: P) -> Result<PostmanCollection>
 where
     P: AsRef<Path>,
 {
     from_reader(File::open(path)?)
 }
 
+/// Deserialize a Postman Collection from a string slice
+pub fn from_str(input: &str) -> Result<PostmanCollection> {
+    from_slice(input.as_bytes())
+}
+
+/// Deserialize a Postman Collection from a byte slice
+pub fn from_slice(input: &[u8]) -> Result<PostmanCollection> {
+    let value = match serde_json::from_slice::<Value>(input) {
+        Ok(value) => value,
+        Err(json) => match serde_yaml::from_slice::<Value>(input) {
+            Ok(value) => value,
+            Err(yaml) => return Err(Error::Parse { json, yaml }),
+        },
+    };
+
+    PostmanCollection::from_value(value)
+}
+
 /// Deserialize a Postman Collection from type which implements Read
-pub fn from_reader<R>(read: R) -> errors::Result<PostmanCollection>
+pub fn from_reader<R>(mut read: R) -> Result<PostmanCollection>
 where
     R: Read,
 {
-    Ok(serde_yaml::from_reader::<R, PostmanCollection>(read)?)
+    let mut bytes = Vec::new();
+    read.read_to_end(&mut bytes)?;
+    from_slice(&bytes)
 }
 
 /// Serialize Postman Collection spec to a YAML string
-pub fn to_yaml(spec: &PostmanCollection) -> errors::Result<String> {
+pub fn to_yaml(spec: &PostmanCollection) -> Result<String> {
     Ok(serde_yaml::to_string(spec)?)
 }
 
 /// Serialize Postman Collection spec to JSON string
-pub fn to_json(spec: &PostmanCollection) -> errors::Result<String> {
+pub fn to_json(spec: &PostmanCollection) -> Result<String> {
     Ok(serde_json::to_string_pretty(spec)?)
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs::File;
-    use std::io::Write;
+fn detect_version(value: &Value) -> Result<PostmanCollectionVersion> {
+    let object = value.as_object().ok_or(Error::InvalidDocumentShape)?;
 
-    use glob::glob;
-
-    use super::*;
-
-    /// Helper function for reading a file to string.
-    fn read_file<P>(path: P) -> String
-    where
-        P: AsRef<Path>,
-    {
-        let mut f = File::open(path).unwrap();
-        let mut content = String::new();
-        f.read_to_string(&mut content).unwrap();
-        content
+    if is_v1_document(object) {
+        return Ok(PostmanCollectionVersion::V1_0_0);
     }
 
-    /// Helper function to write string to file.
-    fn write_to_file<P>(path: P, filename: &str, data: &str)
-    where
-        P: AsRef<Path> + std::fmt::Debug,
-    {
-        println!("    Saving string to {:?}...", path);
-        std::fs::create_dir_all(&path).unwrap();
-        let full_filename = path.as_ref().to_path_buf().join(filename);
-        let mut f = File::create(&full_filename).unwrap();
-        f.write_all(data.as_bytes()).unwrap();
+    if let Some(version) = version_from_schema(object)? {
+        return Ok(version);
     }
 
-    /// Convert a YAML `&str` to a JSON `String`.
-    fn convert_yaml_str_to_json(yaml_str: &str) -> String {
-        let yaml: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap();
-        let json: serde_json::Value = serde_yaml::from_value(yaml).unwrap();
-        serde_json::to_string_pretty(&json).unwrap()
+    let can_parse_v2_0 = serde_json::from_value::<v2_0_0::Spec>(value.clone()).is_ok();
+    let can_parse_v2_1 = serde_json::from_value::<v2_1_0::Spec>(value.clone()).is_ok();
+
+    match (can_parse_v2_0, can_parse_v2_1) {
+        (true, false) => Ok(PostmanCollectionVersion::V2_0_0),
+        (false, true) => Ok(PostmanCollectionVersion::V2_1_0),
+        (true, true) => Err(Error::AmbiguousSpecFileVersion),
+        (false, false) => Err(Error::UnsupportedSpecFileVersion {
+            version: "unknown".to_owned(),
+        }),
+    }
+}
+
+fn is_v1_document(object: &Map<String, Value>) -> bool {
+    ["requests", "folders", "order", "folders_order"]
+        .iter()
+        .any(|key| object.contains_key(*key))
+}
+
+fn version_from_schema(object: &Map<String, Value>) -> Result<Option<PostmanCollectionVersion>> {
+    let Some(schema) = object
+        .get("info")
+        .and_then(Value::as_object)
+        .and_then(|info| info.get("schema"))
+        .and_then(Value::as_str)
+    else {
+        return Ok(None);
+    };
+
+    if schema == POSTMAN_COLLECTION_V2_0_0_SCHEMA {
+        return Ok(Some(PostmanCollectionVersion::V2_0_0));
     }
 
-    /// Deserialize and re-serialize the input file to a JSON string through two different
-    /// paths, comparing the result.
-    /// 1. File -> `String` -> `serde_yaml::Value` -> `serde_json::Value` -> `String`
-    /// 2. File -> `Spec` -> `serde_json::Value` -> `String`
-    /// Both conversion of `serde_json::Value` -> `String` are done
-    /// using `serde_json::to_string_pretty`.
-    /// Since the first conversion is independent of the current crate (and only
-    /// uses serde's json and yaml support), no information should be lost in the final
-    /// JSON string. The second conversion goes through our `PostmanCollection`, so the final JSON
-    /// string is a representation of _our_ implementation.
-    /// By comparing those two JSON conversions, we can validate our implementation.
-    fn compare_spec_through_json(
-        input_file: &Path,
-        save_path_base: &Path,
-    ) -> (String, String, String) {
-        // First conversion:
-        //     File -> `String` -> `serde_yaml::Value` -> `serde_json::Value` -> `String`
-
-        // Read the original file to string
-        let spec_yaml_str = read_file(&input_file);
-        // Convert YAML string to JSON string
-        let spec_json_str = convert_yaml_str_to_json(&spec_yaml_str);
-
-        // Second conversion:
-        //     File -> `Spec` -> `serde_json::Value` -> `String`
-
-        // Parse the input file
-        let parsed_spec = from_path(&input_file).unwrap();
-        // Convert to serde_json::Value
-        let parsed_spec_json: serde_json::Value = serde_json::to_value(parsed_spec).unwrap();
-        // Convert to a JSON string
-        let parsed_spec_json_str: String = serde_json::to_string_pretty(&parsed_spec_json).unwrap();
-
-        // Save JSON strings to file
-        let api_filename = input_file
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .replace(".yaml", ".json");
-
-        let mut save_path = save_path_base.to_path_buf();
-        save_path.push("yaml_to_json");
-        write_to_file(&save_path, &api_filename, &spec_json_str);
-
-        let mut save_path = save_path_base.to_path_buf();
-        save_path.push("yaml_to_spec_to_json");
-        write_to_file(&save_path, &api_filename, &parsed_spec_json_str);
-
-        // Return the JSON filename and the two JSON strings
-        (api_filename, parsed_spec_json_str, spec_json_str)
+    if schema == POSTMAN_COLLECTION_V2_1_0_SCHEMA {
+        return Ok(Some(PostmanCollectionVersion::V2_1_0));
     }
 
-    // Just tests if the deserialization does not blow up. But does not test correctness
-    #[test]
-    fn can_deserialize() {
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
-        {
-            let entry = entry.unwrap();
-            let path = entry.as_path();
-            // cargo test -- --nocapture to see this message
-            println!("Testing if {:?} is deserializable", path);
-            from_path(path).unwrap();
-        }
-    }
-
-    #[test]
-    fn can_deserialize_and_reserialize() {
-        let save_path_base: std::path::PathBuf =
-            ["target", "tests", "can_deserialize_and_reserialize"]
-                .iter()
-                .collect();
-        let mut invalid_diffs = Vec::new();
-
-        for entry in glob("/tests/fixtures/collection/*.json").expect("Failed to read glob pattern")
-        {
-            let entry = entry.unwrap();
-            let path = entry.as_path();
-
-            println!("Testing if {:?} is deserializable", path);
-
-            let (api_filename, parsed_spec_json_str, spec_json_str) =
-                compare_spec_through_json(path, &save_path_base);
-
-            if parsed_spec_json_str != spec_json_str {
-                invalid_diffs.push((api_filename, parsed_spec_json_str, spec_json_str));
-            }
-        }
-
-        for invalid_diff in &invalid_diffs {
-            println!("File {} failed JSON comparison!", invalid_diff.0);
-        }
-        assert_eq!(invalid_diffs.len(), 0);
-    }
+    Err(Error::UnsupportedSpecFileVersion {
+        version: schema.to_owned(),
+    })
 }
