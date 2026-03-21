@@ -170,12 +170,13 @@ pub fn to_json(spec: &PostmanCollection) -> Result<String> {
 fn detect_version(value: &Value) -> Result<PostmanCollectionVersion> {
     let object = value.as_object().ok_or(Error::InvalidDocumentShape)?;
 
-    if is_v1_document(object) {
-        return Ok(PostmanCollectionVersion::V1_0_0);
-    }
-
+    // Prefer an explicit schema over structural heuristics when both are present.
     if let Some(version) = version_from_schema(object)? {
         return Ok(version);
+    }
+
+    if is_v1_document(object) {
+        return Ok(PostmanCollectionVersion::V1_0_0);
     }
 
     let can_parse_v2_0 = serde_json::from_value::<v2_0_0::Spec>(value.clone()).is_ok();

@@ -99,13 +99,52 @@ fn yaml_round_trip_still_works() {
 }
 
 #[test]
-fn rejects_unknown_schema_versions() {
+fn schema_tagged_v2_collections_take_precedence_over_v1_shape_heuristics() {
+    for (schema, expected) in [
+        (
+            "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+            PostmanCollectionVersion::V2_0_0,
+        ),
+        (
+            "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+            PostmanCollectionVersion::V2_1_0,
+        ),
+    ] {
+        let input = format!(
+            r#"{{
+                "info": {{
+                    "name": "Example",
+                    "schema": "{schema}"
+                }},
+                "item": [],
+                "order": ["custom-metadata"]
+            }}"#
+        );
+
+        let collection = from_str(&input).expect("Schema-tagged v2 collection should deserialize");
+        assert_eq!(collection.version(), expected);
+
+        match expected {
+            PostmanCollectionVersion::V1_0_0 => unreachable!("Only v2 schemas are under test"),
+            PostmanCollectionVersion::V2_0_0 => {
+                assert!(matches!(collection, PostmanCollection::V2_0_0(_)));
+            }
+            PostmanCollectionVersion::V2_1_0 => {
+                assert!(matches!(collection, PostmanCollection::V2_1_0(_)));
+            }
+        }
+    }
+}
+
+#[test]
+fn rejects_unknown_schema_versions_even_with_v1_shape_keys_present() {
     let input = r#"{
         "info": {
             "name": "Example",
             "schema": "https://schema.getpostman.com/json/collection/v9.9.9/collection.json"
         },
-        "item": []
+        "item": [],
+        "order": ["custom-metadata"]
     }"#;
 
     let error = from_str(input).expect_err("Unknown schema should fail");
