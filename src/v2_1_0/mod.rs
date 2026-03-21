@@ -50,6 +50,10 @@ pub struct Auth {
     #[serde(rename = "digest")]
     pub digest: Option<Vec<AuthAttribute>>,
 
+    /// The attributes for [Akamai EdgeGrid Authentication](https://techdocs.akamai.com/developer/docs/set-up-authentication-credentials).
+    #[serde(rename = "edgegrid")]
+    pub edgegrid: Option<Vec<AuthAttribute>>,
+
     /// The attributes for [Hawk Authentication](https://github.com/hueniverse/hawk)
     #[serde(rename = "hawk")]
     pub hawk: Option<Vec<AuthAttribute>>,
@@ -406,9 +410,17 @@ pub struct Body {
     #[serde(rename = "formdata")]
     pub formdata: Option<Vec<FormParameter>>,
 
+    /// GraphQL request payload as stored by Postman.
+    #[serde(rename = "graphql")]
+    pub graphql: Option<serde_json::Value>,
+
     /// Postman stores the type of data associated with this request in this field.
     #[serde(rename = "mode")]
     pub mode: Option<Mode>,
+
+    /// Additional configurations and options set for various body modes.
+    #[serde(rename = "options")]
+    pub options: Option<serde_json::Value>,
 
     #[serde(rename = "raw")]
     pub raw: Option<String>,
@@ -589,6 +601,10 @@ pub struct ResponseClass {
     /// response is manually created, this can be set to `null`.
     #[serde(rename = "responseTime")]
     pub response_time: Option<ResponseTime>,
+
+    /// Set of timing information related to request and response in milliseconds.
+    #[serde(rename = "timings")]
+    pub timings: Option<serde_json::Value>,
 
     /// The response status, e.g: '200 OK'
     #[serde(rename = "status")]
@@ -786,6 +802,9 @@ pub enum AuthType {
     #[serde(rename = "digest")]
     Digest,
 
+    #[serde(rename = "edgegrid")]
+    Edgegrid,
+
     #[serde(rename = "hawk")]
     Hawk,
 
@@ -833,6 +852,9 @@ pub enum Mode {
 
     #[serde(rename = "formdata")]
     Formdata,
+
+    #[serde(rename = "graphql")]
+    Graphql,
 
     #[serde(rename = "raw")]
     Raw,

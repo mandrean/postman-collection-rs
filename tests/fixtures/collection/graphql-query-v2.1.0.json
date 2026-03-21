@@ -1,0 +1,63 @@
+{
+  "info": {
+    "_postman_id": "1f6cb533-1fd7-4139-925f-18378d58be26",
+    "name": "GraphQL query fixture",
+    "description": "Minimal v2.1.0 GraphQL collection used for regression coverage.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": null
+  },
+  "item": [
+    {
+      "name": "Run GraphQL query",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "graphql",
+          "graphql": {
+            "query": "query Viewer { viewer { id name } }",
+            "variables": {
+              "includeInactive": false
+            }
+          },
+          "options": {
+            "graphql": {
+              "output": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://example.com/graphql",
+          "protocol": "https",
+          "host": [
+            "example",
+            "com"
+          ],
+          "path": [
+            "graphql"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Viewer response",
+          "status": "OK",
+          "code": 200,
+          "responseTime": 123,
+          "timings": {
+            "response": 123,
+            "dns": 4
+          },
+          "body": "{\"data\":{\"viewer\":{\"id\":\"123\",\"name\":\"Codex\"}}}"
+        }
+      ]
+    }
+  ],
+  "event": [],
+  "variable": null
+}
