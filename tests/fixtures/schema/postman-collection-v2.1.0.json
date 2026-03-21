@@ -70,6 +70,7 @@
                 "type": {
                     "type": "string",
                     "enum": [
+                        "apikey",
                         "awsv4",
                         "basic",
                         "bearer",
@@ -82,6 +83,14 @@
                     ]
                 },
                 "noauth": {},
+                "apikey": {
+                    "type": "array",
+                    "title": "API Key Authentication",
+                    "description": "The attributes for API Key Authentication.",
+                    "items": {
+                        "$ref": "#/definitions/auth-attribute"
+                    }
+                },
                 "awsv4": {
                     "type": "array",
                     "title": "AWS Signature v4",

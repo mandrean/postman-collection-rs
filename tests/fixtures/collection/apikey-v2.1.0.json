@@ -1,0 +1,31 @@
+{
+  "auth": {
+    "apikey": [
+      {
+        "key": "key",
+        "type": null,
+        "value": "X-API-Key"
+      }
+    ],
+    "awsv4": null,
+    "basic": null,
+    "bearer": null,
+    "digest": null,
+    "hawk": null,
+    "noauth": null,
+    "ntlm": null,
+    "oauth1": null,
+    "oauth2": null,
+    "type": "apikey"
+  },
+  "event": null,
+  "info": {
+    "_postman_id": "9bf5fb07-7a7a-4d9a-9d7a-a332e2c6d021",
+    "description": null,
+    "name": "API Key auth v2.1 fixture",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": null
+  },
+  "item": [],
+  "variable": null
+}

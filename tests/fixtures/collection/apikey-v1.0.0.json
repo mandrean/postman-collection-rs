@@ -1,0 +1,31 @@
+{
+  "auth": {
+    "type": "apikey",
+    "noauth": null,
+    "apikey": [
+      {
+        "key": "key",
+        "type": null,
+        "value": "X-API-Key"
+      }
+    ],
+    "awsv4": null,
+    "basic": null,
+    "bearer": null,
+    "digest": null,
+    "hawk": null,
+    "ntlm": null,
+    "oauth1": null,
+    "oauth2": null
+  },
+  "description": null,
+  "events": null,
+  "folders": null,
+  "folders_order": null,
+  "id": "9bf5fb07-7a7a-4d9a-9d7a-a332e2c6d001",
+  "name": "API Key auth v1 fixture",
+  "order": [],
+  "requests": [],
+  "timestamp": null,
+  "variables": null
+}

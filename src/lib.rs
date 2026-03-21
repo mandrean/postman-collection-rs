@@ -55,6 +55,7 @@ pub enum PostmanCollectionVersion {
 /// Supported versions of Postman Collection.
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(untagged)]
+#[allow(clippy::large_enum_variant)]
 pub enum PostmanCollection {
     /// Version 1.0.0 of the Postman Collection specification.
     ///
