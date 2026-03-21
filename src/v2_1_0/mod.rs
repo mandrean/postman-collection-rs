@@ -1,3 +1,5 @@
+#![allow(clippy::large_enum_variant)]
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
