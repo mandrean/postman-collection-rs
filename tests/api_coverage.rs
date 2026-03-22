@@ -1,8 +1,10 @@
 use std::{fs, io::Cursor, path::PathBuf};
 
+#[cfg(feature = "yaml")]
+use postman_collection::to_yaml;
 use postman_collection::{
-    Error, PostmanCollection, from_path, from_reader, from_slice, from_str, to_json, to_yaml,
-    v1_0_0, v2_0_0, v2_1_0,
+    Error, PostmanCollection, from_path, from_reader, from_slice, from_str, to_json, v1_0_0,
+    v2_0_0, v2_1_0,
 };
 
 fn fixture_path(name: &str) -> PathBuf {
@@ -36,7 +38,7 @@ fn normalize_json_value(value: &mut serde_json::Value) {
 
 fn normalized_fixture_json(name: &str) -> serde_json::Value {
     let mut value: serde_json::Value =
-        serde_yaml::from_str(&read_fixture(name)).expect("fixture should deserialize");
+        serde_json::from_str(&read_fixture(name)).expect("fixture should deserialize");
     normalize_json_value(&mut value);
     value
 }
@@ -80,18 +82,57 @@ fn detects_versions_for_sample_fixtures_with_all_entrypoints() {
 }
 
 #[test]
-fn supports_from_slice_for_json_and_yaml_inputs() {
+fn supports_from_slice_for_json_inputs() {
     let json_fixture = read_fixture("swagger-petstore-v2.1.0.json");
     let parsed_from_json = from_slice(json_fixture.as_bytes()).expect("JSON bytes should parse");
 
     assert!(matches!(parsed_from_json, PostmanCollection::V2_1_0(_)));
+}
 
+#[cfg(feature = "yaml")]
+#[test]
+fn supports_from_slice_for_yaml_inputs_when_feature_is_enabled() {
+    let json_fixture = read_fixture("swagger-petstore-v2.1.0.json");
+    let parsed_from_json = from_slice(json_fixture.as_bytes()).expect("JSON bytes should parse");
     let yaml_fixture = to_yaml(&parsed_from_json).expect("collection should serialize to YAML");
     let parsed_from_yaml = from_slice(yaml_fixture.as_bytes()).expect("YAML bytes should parse");
 
     assert_eq!(parsed_from_yaml, parsed_from_json);
 }
 
+#[cfg(not(feature = "yaml"))]
+#[test]
+fn rejects_yaml_input_even_when_it_looks_like_a_collection() {
+    let yaml = r#"
+info:
+  name: Example
+  schema: https://schema.getpostman.com/json/collection/v2.1.0/collection.json
+item: []
+"#;
+
+    let error = from_str(yaml).expect_err("YAML input should fail without JSON syntax");
+    assert!(matches!(error, Error::Json(_)));
+}
+
+#[cfg(feature = "yaml")]
+#[test]
+fn accepts_yaml_input_when_feature_is_enabled() {
+    let json_fixture = read_fixture("swagger-petstore-v2.1.0.json");
+    let parsed_from_json = from_str(&json_fixture).expect("JSON fixture should parse");
+    let yaml_fixture = to_yaml(&parsed_from_json).expect("collection should serialize to YAML");
+    let parsed_from_yaml = from_str(&yaml_fixture).expect("YAML string should parse");
+
+    assert_eq!(parsed_from_yaml, parsed_from_json);
+}
+
+#[cfg(not(feature = "yaml"))]
+#[test]
+fn returns_json_errors_for_bytes_that_are_not_json() {
+    let error = from_slice(b"\xFF").expect_err("invalid bytes should fail to parse");
+    assert!(matches!(error, Error::Json(_)));
+}
+
+#[cfg(feature = "yaml")]
 #[test]
 fn returns_parse_errors_for_bytes_that_are_not_json_or_yaml() {
     let error = from_slice(b"\xFF").expect_err("invalid bytes should fail to parse");
@@ -172,6 +213,20 @@ fn rejects_v2_documents_without_schema_metadata() {
 
     let error = from_reader(Cursor::new(serde_json::to_vec(&fixture).unwrap())).unwrap_err();
     assert!(matches!(error, Error::MissingSpecFileVersion));
+}
+
+#[cfg(feature = "yaml")]
+#[test]
+fn serializes_to_yaml_when_feature_is_enabled() {
+    let collection =
+        from_path(fixture_path("swagger-petstore-v2.1.0.json")).expect("fixture should parse");
+    let yaml = to_yaml(&collection).expect("collection should serialize to YAML");
+
+    assert!(yaml.contains("info:"), "unexpected YAML output: {yaml}");
+    assert!(
+        yaml.contains("name: Swagger Petstore"),
+        "unexpected YAML output: {yaml}"
+    );
 }
 
 #[test]

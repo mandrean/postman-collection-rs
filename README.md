@@ -10,8 +10,9 @@ postman-collection-rs
 Overview
 --------
 `postman_collection` provides typed Rust models for working with Postman Collection files.
-It can deserialize collections from JSON or YAML, identify the supported collection version,
-and serialize the typed model back to JSON or YAML.
+It deserializes collections from JSON, identifies the supported collection version,
+and serializes the typed model back to JSON. YAML parsing and serialization are
+available behind the optional `yaml` feature.
 
 Current highlights:
 
@@ -19,7 +20,8 @@ Current highlights:
 - version-specific models exposed as `v1_0_0`, `v2_0_0`, and `v2_1_0`
 - strict version detection through the top-level `PostmanCollection` enum
 - convenient parsing helpers: `from_path`, `from_reader`, `from_str`, and `from_slice`
-- serialization helpers: `to_json` and `to_yaml`
+- JSON serialization with `to_json`
+- optional YAML parsing and serialization with the `yaml` feature
 - regression coverage for version dispatch, round-tripping, and representative schema branches
 
 Supported Versions
@@ -40,11 +42,18 @@ version, fail to deserialize instead of being guessed into the wrong version mod
 
 Install
 -------
-Add the following to your `Cargo.toml` file:
+JSON-only use (default):
 
 ```toml
 [dependencies]
-postman_collection = "0.2"
+postman_collection = "0.3"
+```
+
+Enable YAML serialization:
+
+```toml
+[dependencies]
+postman_collection = { version = "0.3", features = ["yaml"] }
 ```
 
 Usage
@@ -79,12 +88,34 @@ fn main() -> postman_collection::Result<()> {
 
 See [examples/printer.rs](examples/printer.rs) for a complete runnable example.
 
+With the `yaml` feature enabled, parsing helpers also accept YAML input and you can
+serialize a parsed collection as YAML:
+
+```rust
+use postman_collection::{from_str, to_yaml};
+
+fn main() -> postman_collection::Result<()> {
+    let input = r#"{
+        "info": {
+            "name": "Example",
+            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+        },
+        "item": []
+    }"#;
+
+    let collection = from_str(input)?;
+    println!("{}", to_yaml(&collection)?);
+    Ok(())
+}
+```
+
 Current State
 -------------
 The crate currently focuses on:
 
 - accurate deserialization into version-specific Rust types
-- stable serialization back to JSON and YAML
+- stable serialization back to JSON
+- optional YAML parsing and serialization for callers that opt into the `yaml` feature
 - explicit handling of collection version selection
 - preserving representative schema branches exercised by the bundled fixtures and regression tests
 

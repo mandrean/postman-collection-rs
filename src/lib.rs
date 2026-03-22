@@ -1,3 +1,12 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+//! Postman Collection serialization and deserialization helpers.
+//!
+//! Postman Collection input is parsed from JSON by default.
+//! JSON serialization is available by default.
+//! Enable the crate feature `yaml` to also accept YAML input and serialize parsed
+//! collections with `to_yaml`.
+
 use std::{fs::File, io::Read, path::Path};
 
 pub use errors::{Error, Result};
@@ -27,12 +36,16 @@ pub mod errors {
         Io(#[from] std::io::Error),
         #[error("JSON error: {0}")]
         Json(#[from] serde_json::Error),
+        #[cfg(feature = "yaml")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
         #[error("YAML error: {0}")]
-        Yaml(#[from] serde_yaml::Error),
+        Yaml(#[from] yaml_serde::Error),
+        #[cfg(feature = "yaml")]
+        #[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
         #[error("failed to parse collection as JSON ({json}) or YAML ({yaml})")]
         Parse {
             json: serde_json::Error,
-            yaml: serde_yaml::Error,
+            yaml: yaml_serde::Error,
         },
         #[error("expected the Postman Collection document root to be an object")]
         InvalidDocumentShape,
@@ -143,13 +156,17 @@ pub fn from_str(input: &str) -> Result<PostmanCollection> {
 
 /// Deserialize a Postman Collection from a byte slice
 pub fn from_slice(input: &[u8]) -> Result<PostmanCollection> {
+    #[cfg(feature = "yaml")]
     let value = match serde_json::from_slice::<Value>(input) {
         Ok(value) => value,
-        Err(json) => match serde_yaml::from_slice::<Value>(input) {
+        Err(json) => match yaml_serde::from_slice::<Value>(input) {
             Ok(value) => value,
             Err(yaml) => return Err(Error::Parse { json, yaml }),
         },
     };
+
+    #[cfg(not(feature = "yaml"))]
+    let value = serde_json::from_slice::<Value>(input)?;
 
     PostmanCollection::from_value(value)
 }
@@ -164,9 +181,30 @@ where
     from_slice(&bytes)
 }
 
-/// Serialize Postman Collection spec to a YAML string
+/// Serialize a Postman Collection to a YAML string.
+///
+/// Available with the crate feature `yaml`.
+///
+/// ```
+/// use postman_collection::{from_str, to_yaml};
+///
+/// let input = r#"{
+///   "info": {
+///     "name": "Example",
+///     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+///   },
+///   "item": []
+/// }"#;
+///
+/// let collection = from_str(input)?;
+/// let yaml = to_yaml(&collection)?;
+/// assert!(yaml.contains("info:"));
+/// # Ok::<(), postman_collection::Error>(())
+/// ```
+#[cfg(feature = "yaml")]
+#[cfg_attr(docsrs, doc(cfg(feature = "yaml")))]
 pub fn to_yaml(spec: &PostmanCollection) -> Result<String> {
-    Ok(serde_yaml::to_string(spec)?)
+    Ok(yaml_serde::to_string(spec)?)
 }
 
 /// Serialize Postman Collection spec to JSON string
@@ -355,10 +393,9 @@ mod tests {
         }
     }
 
-    /// Convert a YAML `&str` to a normalized JSON `String`.
-    fn convert_yaml_str_to_json(yaml_str: &str) -> String {
-        let yaml: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap();
-        let mut json: serde_json::Value = serde_yaml::from_value(yaml).unwrap();
+    /// Convert a JSON `&str` to a normalized JSON `String`.
+    fn convert_json_str_to_json(json_str: &str) -> String {
+        let mut json: serde_json::Value = serde_json::from_str(json_str).unwrap();
         normalize_json_value(&mut json);
         serde_json::to_string_pretty(&json).unwrap()
     }
@@ -369,30 +406,25 @@ mod tests {
         input_file: &Path,
         save_path_base: &Path,
     ) -> (String, String, String) {
-        let spec_yaml_str = read_file(input_file);
-        let spec_json_str = convert_yaml_str_to_json(&spec_yaml_str);
+        let source_json_str = read_file(input_file);
+        let expected_json_str = convert_json_str_to_json(&source_json_str);
 
         let parsed_spec = from_path(input_file).unwrap();
         let mut parsed_spec_json: serde_json::Value = serde_json::to_value(parsed_spec).unwrap();
         normalize_json_value(&mut parsed_spec_json);
         let parsed_spec_json_str = serde_json::to_string_pretty(&parsed_spec_json).unwrap();
 
-        let api_filename = input_file
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .replace(".yaml", ".json");
+        let api_filename = input_file.file_name().unwrap().to_str().unwrap().to_owned();
 
         let mut save_path = save_path_base.to_path_buf();
-        save_path.push("yaml_to_json");
-        write_to_file(&save_path, &api_filename, &spec_json_str);
+        save_path.push("json_to_json");
+        write_to_file(&save_path, &api_filename, &expected_json_str);
 
         let mut save_path = save_path_base.to_path_buf();
-        save_path.push("yaml_to_spec_to_json");
+        save_path.push("json_to_spec_to_json");
         write_to_file(&save_path, &api_filename, &parsed_spec_json_str);
 
-        (api_filename, parsed_spec_json_str, spec_json_str)
+        (api_filename, parsed_spec_json_str, expected_json_str)
     }
 
     #[test]
