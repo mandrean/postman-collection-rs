@@ -275,6 +275,46 @@ mod tests {
         )
     }
 
+    fn schema_fixture_root() -> std::path::PathBuf {
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("schema")
+    }
+
+    fn schema_fixture_version(name: &str) -> PostmanCollectionVersion {
+        let schema_fixture = read_file(schema_fixture_root().join(name));
+        let schema_json: serde_json::Value =
+            serde_json::from_str(&schema_fixture).expect("schema fixture should parse as JSON");
+        let schema_id = schema_json
+            .get("$id")
+            .and_then(serde_json::Value::as_str)
+            .expect("schema fixture should contain a $id");
+
+        match extract_schema_version(schema_id).expect("schema fixture id should contain a version")
+        {
+            SchemaVersion {
+                major: 1,
+                minor: 0,
+                patch: 0,
+            } => PostmanCollectionVersion::V1_0_0,
+            SchemaVersion {
+                major: 2,
+                minor: 0,
+                patch: 0,
+            } => PostmanCollectionVersion::V2_0_0,
+            SchemaVersion {
+                major: 2,
+                minor: 1,
+                patch: 0,
+            } => PostmanCollectionVersion::V2_1_0,
+            version => panic!(
+                "unexpected schema fixture version {}.{}.{}",
+                version.major, version.minor, version.patch
+            ),
+        }
+    }
+
     /// Helper function for reading a file to string.
     fn read_file<P>(path: P) -> String
     where
@@ -412,5 +452,21 @@ mod tests {
             from_path(fixture_root.join("swagger-petstore-v2.1.0.json")).unwrap(),
             PostmanCollection::V2_1_0(_)
         ));
+    }
+
+    #[test]
+    fn extracts_versions_from_schema_fixture_identifiers() {
+        assert_eq!(
+            schema_fixture_version("postman-collection-v1.0.0.json"),
+            PostmanCollectionVersion::V1_0_0
+        );
+        assert_eq!(
+            schema_fixture_version("postman-collection-v2.0.0.json"),
+            PostmanCollectionVersion::V2_0_0
+        );
+        assert_eq!(
+            schema_fixture_version("postman-collection-v2.1.0.json"),
+            PostmanCollectionVersion::V2_1_0
+        );
     }
 }

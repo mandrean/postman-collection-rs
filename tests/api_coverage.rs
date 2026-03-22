@@ -1,7 +1,8 @@
 use std::{fs, io::Cursor, path::PathBuf};
 
 use postman_collection::{
-    Error, PostmanCollection, from_path, from_reader, to_json, v1_0_0, v2_0_0, v2_1_0,
+    Error, PostmanCollection, from_path, from_reader, from_slice, from_str, to_json, to_yaml,
+    v1_0_0, v2_0_0, v2_1_0,
 };
 
 fn fixture_path(name: &str) -> PathBuf {
@@ -76,6 +77,71 @@ fn detects_versions_for_sample_fixtures_with_all_entrypoints() {
         serde_json::from_str::<PostmanCollection>(&v2_1_json).unwrap(),
         PostmanCollection::V2_1_0(_)
     ));
+}
+
+#[test]
+fn supports_from_slice_for_json_and_yaml_inputs() {
+    let json_fixture = read_fixture("swagger-petstore-v2.1.0.json");
+    let parsed_from_json = from_slice(json_fixture.as_bytes()).expect("JSON bytes should parse");
+
+    assert!(matches!(parsed_from_json, PostmanCollection::V2_1_0(_)));
+
+    let yaml_fixture = to_yaml(&parsed_from_json).expect("collection should serialize to YAML");
+    let parsed_from_yaml = from_slice(yaml_fixture.as_bytes()).expect("YAML bytes should parse");
+
+    assert_eq!(parsed_from_yaml, parsed_from_json);
+}
+
+#[test]
+fn returns_parse_errors_for_bytes_that_are_not_json_or_yaml() {
+    let error = from_slice(b"\xFF").expect_err("invalid bytes should fail to parse");
+    assert!(matches!(error, Error::Parse { .. }));
+}
+
+#[test]
+fn rejects_non_object_document_roots() {
+    let error = from_str("[]").expect_err("array roots should be rejected");
+    assert!(matches!(error, Error::InvalidDocumentShape));
+}
+
+#[test]
+fn returns_json_errors_after_version_detection_for_invalid_collection_shapes() {
+    let error = from_str(
+        r#"{
+            "info": {
+                "name": "Broken fixture",
+                "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+            },
+            "item": "should have been an array"
+        }"#,
+    )
+    .expect_err("invalid v2.1 shape should fail");
+
+    assert!(matches!(error, Error::Json(_)));
+}
+
+#[test]
+fn rejects_unrecognized_schema_versions() {
+    let schema = "https://schema.getpostman.com/json/collection/current/collection.json";
+    let error = from_str(&format!(
+        r#"{{
+            "info": {{
+                "name": "Example",
+                "schema": "{schema}"
+            }},
+            "item": []
+        }}"#
+    ))
+    .expect_err("unrecognized schema should fail");
+
+    match error {
+        Error::UnrecognizedSpecFileVersion {
+            schema: rejected_schema,
+        } => {
+            assert_eq!(rejected_schema, schema);
+        }
+        error => panic!("expected UnrecognizedSpecFileVersion, got {:?}", error),
+    }
 }
 
 #[test]
@@ -168,4 +234,137 @@ fn parses_v2_item_group_branches_explicitly() {
         panic!("expected top-level item-group for v2.1.0");
     };
     assert!(matches!(v2_1_group.item[0], v2_1_0::Items::Item(_)));
+}
+
+#[test]
+fn parses_api_key_auth_across_supported_versions() {
+    let v1_collection = from_path(fixture_path("apikey-v1.0.0.json")).unwrap();
+    let PostmanCollection::V1_0_0(v1_spec) = v1_collection else {
+        panic!("expected v1 collection");
+    };
+    let v1_auth = v1_spec.auth.as_ref().expect("v1 auth should exist");
+    assert!(matches!(v1_auth.auth_type, v1_0_0::AuthType::Apikey));
+    let v1_api_key = v1_auth
+        .api_key
+        .as_ref()
+        .expect("v1 API key auth should exist");
+    assert_eq!(v1_api_key.len(), 1);
+    assert_eq!(v1_api_key[0].key, "key");
+    assert_eq!(
+        v1_api_key[0].value,
+        Some(serde_json::Value::String("X-API-Key".to_owned()))
+    );
+
+    let v2_0_collection = from_path(fixture_path("apikey-v2.0.0.json")).unwrap();
+    let PostmanCollection::V2_0_0(v2_0_spec) = v2_0_collection else {
+        panic!("expected v2.0.0 collection");
+    };
+    let v2_0_auth = v2_0_spec.auth.as_ref().expect("v2.0 auth should exist");
+    assert!(matches!(v2_0_auth.auth_type, v2_0_0::AuthType::Apikey));
+    let v2_0_api_key = v2_0_auth
+        .api_key
+        .as_ref()
+        .expect("v2.0 API key auth should exist");
+    assert_eq!(
+        v2_0_api_key.get("key"),
+        Some(&Some(serde_json::Value::String("X-API-Key".to_owned())))
+    );
+
+    let v2_1_collection = from_path(fixture_path("apikey-v2.1.0.json")).unwrap();
+    let PostmanCollection::V2_1_0(v2_1_spec) = v2_1_collection else {
+        panic!("expected v2.1.0 collection");
+    };
+    let v2_1_auth = v2_1_spec.auth.as_ref().expect("v2.1 auth should exist");
+    assert!(matches!(v2_1_auth.auth_type, v2_1_0::AuthType::Apikey));
+    let v2_1_api_key = v2_1_auth
+        .api_key
+        .as_ref()
+        .expect("v2.1 API key auth should exist");
+    assert_eq!(v2_1_api_key.len(), 1);
+    assert_eq!(v2_1_api_key[0].key, "key");
+    assert_eq!(
+        v2_1_api_key[0].value,
+        Some(serde_json::Value::String("X-API-Key".to_owned()))
+    );
+}
+
+#[test]
+fn parses_v2_1_edgegrid_auth_attributes_explicitly() {
+    let collection = from_path(fixture_path("edgegrid-v2.1.0.json")).unwrap();
+    let PostmanCollection::V2_1_0(spec) = collection else {
+        panic!("expected v2.1.0 collection");
+    };
+    let auth = spec.auth.as_ref().expect("edgegrid auth should exist");
+
+    assert!(matches!(auth.auth_type, v2_1_0::AuthType::Edgegrid));
+
+    let edgegrid = auth
+        .edgegrid
+        .as_ref()
+        .expect("edgegrid attributes should exist");
+    assert_eq!(edgegrid.len(), 2);
+    assert_eq!(edgegrid[0].key, "accessToken");
+    assert_eq!(
+        edgegrid[0].value,
+        Some(serde_json::Value::String(
+            "edgegrid-access-token".to_owned()
+        ))
+    );
+    assert_eq!(edgegrid[1].key, "clientToken");
+    assert_eq!(
+        edgegrid[1].value,
+        Some(serde_json::Value::String(
+            "edgegrid-client-token".to_owned()
+        ))
+    );
+}
+
+#[test]
+fn parses_v2_1_graphql_body_options_and_response_timings_explicitly() {
+    let collection = from_path(fixture_path("graphql-query-v2.1.0.json")).unwrap();
+    let PostmanCollection::V2_1_0(spec) = collection else {
+        panic!("expected v2.1.0 collection");
+    };
+    let v2_1_0::Items::Item(item) = &spec.item[0] else {
+        panic!("expected a top-level item");
+    };
+    let v2_1_0::RequestUnion::RequestClass(request) = &item.request else {
+        panic!("expected a structured request");
+    };
+    let body = request
+        .body
+        .as_ref()
+        .expect("GraphQL request body should exist");
+
+    assert_eq!(body.mode.as_ref(), Some(&v2_1_0::Mode::Graphql));
+
+    let graphql = body
+        .graphql
+        .as_ref()
+        .expect("GraphQL payload should be preserved");
+    assert_eq!(graphql["query"], "query Viewer { viewer { id name } }");
+    assert_eq!(graphql["variables"]["includeInactive"], false);
+
+    let options = body
+        .options
+        .as_ref()
+        .expect("GraphQL body options should be preserved");
+    assert_eq!(options["graphql"]["output"], "json");
+
+    let response = item
+        .response
+        .as_ref()
+        .and_then(|responses| responses.first())
+        .expect("sample response should exist");
+    assert_eq!(
+        response.response_time.as_ref(),
+        Some(&v2_1_0::ResponseTime::Integer(123))
+    );
+
+    let timings = response
+        .timings
+        .as_ref()
+        .expect("response timings should be preserved");
+    assert_eq!(timings["response"], 123);
+    assert_eq!(timings["dns"], 4);
 }

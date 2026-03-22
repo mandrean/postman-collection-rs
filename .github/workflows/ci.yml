@@ -29,3 +29,23 @@ jobs:
         run: cargo test --doc
       - name: Build examples
         run: cargo build --examples
+
+  coverage:
+    name: Coverage
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov --locked
+      - name: Measure coverage
+        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info --fail-under-lines 80
+      - name: Upload lcov artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov
+          path: lcov.info
