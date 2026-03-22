@@ -99,8 +99,7 @@ Examples of supported modeled areas include:
 Contribute
 ----------
 This project follows [semver], [conventional commits], and uses GitHub Actions plus
-[release-plz] for CI and releases. The release workflow expects a
-`CARGO_REGISTRY_TOKEN` repository secret and GitHub Actions permissions that allow release PRs.
+[release-plz] for CI and releases.
 
 Note
 ----
