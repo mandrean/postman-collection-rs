@@ -305,14 +305,18 @@ pub struct CollectionVersionClass {
     pub patch: i64,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(untagged)]
+pub enum Items {
+    Item(Item),
+
+    ItemGroup(ItemGroup),
+}
+
 /// Items are entities which contain an actual HTTP request, and sample responses attached to
 /// it.
-///
-/// One of the primary goals of Postman is to organize the development of APIs. To this end,
-/// it is necessary to be able to group requests together. This can be achived using
-/// 'Folders'. A folder just is an ordered set of requests.
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Default)]
-pub struct Items {
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct Item {
     #[serde(rename = "description")]
     pub description: Option<DescriptionUnion>,
 
@@ -335,21 +339,41 @@ pub struct Items {
     pub protocol_profile_behavior: Option<ProtocolProfileBehavior>,
 
     #[serde(rename = "request")]
-    pub request: Option<RequestUnion>,
+    pub request: RequestUnion,
 
     #[serde(rename = "response")]
-    pub response: Option<Vec<Option<Response>>>,
+    pub response: Option<Vec<ResponseClass>>,
 
     #[serde(rename = "variable")]
     pub variable: Option<Vec<Variable>>,
+}
 
+/// One of the primary goals of Postman is to organize the development of APIs. To this end,
+/// it is necessary to be able to group requests together. This can be achived using
+/// 'Folders'. A folder just is an ordered set of requests.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub struct ItemGroup {
     #[serde(rename = "auth")]
     pub auth: Option<Auth>,
+
+    #[serde(rename = "description")]
+    pub description: Option<DescriptionUnion>,
+
+    #[serde(rename = "event")]
+    pub event: Option<Vec<Event>>,
 
     /// Items are entities which contain an actual HTTP request, and sample responses attached to
     /// it. Folders may contain many items.
     #[serde(rename = "item")]
-    pub item: Option<Vec<Items>>,
+    pub item: Vec<Items>,
+
+    /// A folder's friendly name is defined by this field. You would want to set this field to a
+    /// value that would allow you to easily identify this folder.
+    #[serde(rename = "name")]
+    pub name: Option<String>,
+
+    #[serde(rename = "variable")]
+    pub variable: Option<Vec<Variable>>,
 }
 
 /// Set of configurations used to alter the usual behavior of sending the request
@@ -456,6 +480,9 @@ pub struct UrlEncodedParameter {
 
     #[serde(rename = "key")]
     pub key: String,
+
+    #[serde(rename = "type")]
+    pub parameter_type: Option<String>,
 
     #[serde(rename = "value")]
     pub value: Option<String>,
@@ -750,6 +777,8 @@ pub enum HeaderElement {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(untagged)]
 pub enum ResponseTime {
+    Integer(i64),
+
     Double(f64),
 
     String(String),

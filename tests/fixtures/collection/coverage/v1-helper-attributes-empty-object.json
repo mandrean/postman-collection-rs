@@ -1,0 +1,17 @@
+{
+  "id": "collection-v1-empty",
+  "name": "V1 Helper Attributes Empty Object",
+  "order": [
+    "request-v1-empty"
+  ],
+  "requests": [
+    {
+      "id": "request-v1-empty",
+      "name": "Empty object helper attributes",
+      "headers": "",
+      "method": "GET",
+      "url": "https://example.com/empty-helper",
+      "helperAttributes": {}
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "info": {
+    "name": "Coverage V2.1.0 Item Group",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Folder branch",
+      "auth": {
+        "type": "bearer",
+        "bearer": [
+          {
+            "key": "token",
+            "type": "string",
+            "value": "folder-token"
+          }
+        ]
+      },
+      "item": [
+        {
+          "name": "Upload request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "type": "string",
+                  "value": "request-token"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": "Content-Type: multipart/form-data",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "metadata",
+                  "type": "text",
+                  "value": "alpha"
+                },
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "avatar.png"
+                }
+              ]
+            },
+            "url": "https://example.com/upload"
+          },
+          "response": [
+            {
+              "id": "response-v2-1-0",
+              "status": "201 Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "https://example.com/upload/1"
+                }
+              ],
+              "body": "created"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
