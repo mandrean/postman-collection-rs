@@ -1,0 +1,78 @@
+{
+  "info": {
+    "name": "Coverage V2.0.0 Item Group",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Folder branch",
+      "auth": {
+        "type": "basic",
+        "basic": {
+          "username": "alice",
+          "password": "secret"
+        }
+      },
+      "item": [
+        {
+          "name": "Request branch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "name",
+                  "type": "text",
+                  "value": "alpha"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://example.com/pets/:petId?state=ready",
+              "protocol": "https",
+              "host": [
+                "example",
+                "com"
+              ],
+              "path": [
+                "pets",
+                {
+                  "type": "segment",
+                  "value": "petId"
+                }
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "ready"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "petId",
+                  "value": "123"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "id": "response-v2-0-0",
+              "status": "200 OK",
+              "code": 200,
+              "header": "X-Trace: 123",
+              "body": "ok"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

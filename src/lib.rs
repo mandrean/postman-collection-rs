@@ -8,10 +8,12 @@ pub mod v1_0_0;
 pub mod v2_0_0;
 pub mod v2_1_0;
 
-const POSTMAN_COLLECTION_V2_0_0_SCHEMA: &str =
-    "https://schema.getpostman.com/json/collection/v2.0.0/collection.json";
-const POSTMAN_COLLECTION_V2_1_0_SCHEMA: &str =
-    "https://schema.getpostman.com/json/collection/v2.1.0/collection.json";
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+struct SchemaVersion {
+    major: u64,
+    minor: u64,
+    patch: u64,
+}
 
 /// Errors that Postman Collection functions may return
 pub mod errors {
@@ -34,8 +36,12 @@ pub mod errors {
         },
         #[error("expected the Postman Collection document root to be an object")]
         InvalidDocumentShape,
-        #[error("ambiguous Postman Collection file version; add a supported info.schema URL")]
-        AmbiguousSpecFileVersion,
+        #[error(
+            "missing Postman Collection file version; expected a supported v2 info.schema value or the v1 collection shape"
+        )]
+        MissingSpecFileVersion,
+        #[error("could not determine Postman Collection file version from schema ({schema})")]
+        UnrecognizedSpecFileVersion { schema: String },
         #[error("unsupported Postman Collection file version: {version}")]
         UnsupportedSpecFileVersion { version: String },
     }
@@ -64,14 +70,14 @@ pub enum PostmanCollection {
     /// for more information.
     #[allow(non_camel_case_types)]
     V1_0_0(v1_0_0::Spec),
-    /// Version 1.0.0 of the Postman Collection specification.
+    /// Version 2.0.0 of the Postman Collection specification.
     ///
     /// Refer to the official
     /// [specification](https://schema.getpostman.com/collection/json/v2.0.0/draft-07/docs/index.html)
     /// for more information.
     #[allow(non_camel_case_types)]
     V2_0_0(v2_0_0::Spec),
-    /// Version 1.0.0 of the Postman Collection specification.
+    /// Version 2.1.0 of the Postman Collection specification.
     ///
     /// Refer to the official
     /// [specification](https://schema.getpostman.com/collection/json/v2.1.0/draft-07/docs/index.html)
@@ -171,7 +177,6 @@ pub fn to_json(spec: &PostmanCollection) -> Result<String> {
 fn detect_version(value: &Value) -> Result<PostmanCollectionVersion> {
     let object = value.as_object().ok_or(Error::InvalidDocumentShape)?;
 
-    // Prefer an explicit schema over structural heuristics when both are present.
     if let Some(version) = version_from_schema(object)? {
         return Ok(version);
     }
@@ -180,23 +185,22 @@ fn detect_version(value: &Value) -> Result<PostmanCollectionVersion> {
         return Ok(PostmanCollectionVersion::V1_0_0);
     }
 
-    let can_parse_v2_0 = serde_json::from_value::<v2_0_0::Spec>(value.clone()).is_ok();
-    let can_parse_v2_1 = serde_json::from_value::<v2_1_0::Spec>(value.clone()).is_ok();
-
-    match (can_parse_v2_0, can_parse_v2_1) {
-        (true, false) => Ok(PostmanCollectionVersion::V2_0_0),
-        (false, true) => Ok(PostmanCollectionVersion::V2_1_0),
-        (true, true) => Err(Error::AmbiguousSpecFileVersion),
-        (false, false) => Err(Error::UnsupportedSpecFileVersion {
-            version: "unknown".to_owned(),
-        }),
+    if looks_like_v2_document(object) {
+        return Err(Error::MissingSpecFileVersion);
     }
+
+    Err(Error::InvalidDocumentShape)
 }
 
 fn is_v1_document(object: &Map<String, Value>) -> bool {
-    ["requests", "folders", "order", "folders_order"]
-        .iter()
-        .any(|key| object.contains_key(*key))
+    object.contains_key("id")
+        && object.contains_key("name")
+        && object.contains_key("order")
+        && object.contains_key("requests")
+}
+
+fn looks_like_v2_document(object: &Map<String, Value>) -> bool {
+    object.contains_key("info") || object.contains_key("item")
 }
 
 fn version_from_schema(object: &Map<String, Value>) -> Result<Option<PostmanCollectionVersion>> {
@@ -209,15 +213,204 @@ fn version_from_schema(object: &Map<String, Value>) -> Result<Option<PostmanColl
         return Ok(None);
     };
 
-    if schema == POSTMAN_COLLECTION_V2_0_0_SCHEMA {
-        return Ok(Some(PostmanCollectionVersion::V2_0_0));
+    let version =
+        extract_schema_version(schema).ok_or_else(|| Error::UnrecognizedSpecFileVersion {
+            schema: schema.to_owned(),
+        })?;
+
+    match version {
+        SchemaVersion {
+            major: 2,
+            minor: 0,
+            patch: 0,
+        } => Ok(Some(PostmanCollectionVersion::V2_0_0)),
+        SchemaVersion {
+            major: 2,
+            minor: 1,
+            patch: 0,
+        } => Ok(Some(PostmanCollectionVersion::V2_1_0)),
+        version => Err(Error::UnsupportedSpecFileVersion {
+            version: format!("{}.{}.{}", version.major, version.minor, version.patch),
+        }),
+    }
+}
+
+fn extract_schema_version(schema: &str) -> Option<SchemaVersion> {
+    schema
+        .split(|character: char| !(character.is_ascii_alphanumeric() || character == '.'))
+        .filter_map(|segment| segment.strip_prefix('v'))
+        .find_map(parse_schema_version)
+}
+
+fn parse_schema_version(candidate: &str) -> Option<SchemaVersion> {
+    let mut parts = candidate.split('.');
+    let major = parts.next()?.parse().ok()?;
+    let minor = parts.next()?.parse().ok()?;
+    let patch = parts.next()?.parse().ok()?;
+
+    if parts.next().is_some() {
+        return None;
     }
 
-    if schema == POSTMAN_COLLECTION_V2_1_0_SCHEMA {
-        return Ok(Some(PostmanCollectionVersion::V2_1_0));
-    }
-
-    Err(Error::UnsupportedSpecFileVersion {
-        version: schema.to_owned(),
+    Some(SchemaVersion {
+        major,
+        minor,
+        patch,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use std::fs::File;
+    use std::io::Write;
+
+    use glob::glob;
+
+    use super::*;
+
+    fn collection_fixture_glob() -> String {
+        format!(
+            "{}/tests/fixtures/collection/**/*.json",
+            env!("CARGO_MANIFEST_DIR")
+        )
+    }
+
+    /// Helper function for reading a file to string.
+    fn read_file<P>(path: P) -> String
+    where
+        P: AsRef<Path>,
+    {
+        let mut f = File::open(path).unwrap();
+        let mut content = String::new();
+        f.read_to_string(&mut content).unwrap();
+        content
+    }
+
+    /// Helper function to write string to file.
+    fn write_to_file<P>(path: P, filename: &str, data: &str)
+    where
+        P: AsRef<Path> + std::fmt::Debug,
+    {
+        println!("    Saving string to {:?}...", path);
+        std::fs::create_dir_all(&path).unwrap();
+        let full_filename = path.as_ref().to_path_buf().join(filename);
+        let mut f = File::create(&full_filename).unwrap();
+        f.write_all(data.as_bytes()).unwrap();
+    }
+
+    fn normalize_json_value(value: &mut serde_json::Value) {
+        match value {
+            serde_json::Value::Array(values) => {
+                for value in values {
+                    normalize_json_value(value);
+                }
+            }
+            serde_json::Value::Object(map) => {
+                map.retain(|_, value| {
+                    normalize_json_value(value);
+                    !value.is_null()
+                });
+            }
+            _ => {}
+        }
+    }
+
+    /// Convert a YAML `&str` to a normalized JSON `String`.
+    fn convert_yaml_str_to_json(yaml_str: &str) -> String {
+        let yaml: serde_yaml::Value = serde_yaml::from_str(yaml_str).unwrap();
+        let mut json: serde_json::Value = serde_yaml::from_value(yaml).unwrap();
+        normalize_json_value(&mut json);
+        serde_json::to_string_pretty(&json).unwrap()
+    }
+
+    /// Deserialize and re-serialize the input file to a JSON string through two different
+    /// paths, comparing the result.
+    fn compare_spec_through_json(
+        input_file: &Path,
+        save_path_base: &Path,
+    ) -> (String, String, String) {
+        let spec_yaml_str = read_file(input_file);
+        let spec_json_str = convert_yaml_str_to_json(&spec_yaml_str);
+
+        let parsed_spec = from_path(input_file).unwrap();
+        let mut parsed_spec_json: serde_json::Value = serde_json::to_value(parsed_spec).unwrap();
+        normalize_json_value(&mut parsed_spec_json);
+        let parsed_spec_json_str = serde_json::to_string_pretty(&parsed_spec_json).unwrap();
+
+        let api_filename = input_file
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .replace(".yaml", ".json");
+
+        let mut save_path = save_path_base.to_path_buf();
+        save_path.push("yaml_to_json");
+        write_to_file(&save_path, &api_filename, &spec_json_str);
+
+        let mut save_path = save_path_base.to_path_buf();
+        save_path.push("yaml_to_spec_to_json");
+        write_to_file(&save_path, &api_filename, &parsed_spec_json_str);
+
+        (api_filename, parsed_spec_json_str, spec_json_str)
+    }
+
+    #[test]
+    fn can_deserialize() {
+        for entry in glob(&collection_fixture_glob()).expect("Failed to read glob pattern") {
+            let entry = entry.unwrap();
+            let path = entry.as_path();
+            println!("Testing if {:?} is deserializable", path);
+            from_path(path).unwrap();
+        }
+    }
+
+    #[test]
+    fn can_deserialize_and_reserialize() {
+        let save_path_base: std::path::PathBuf =
+            ["target", "tests", "can_deserialize_and_reserialize"]
+                .iter()
+                .collect();
+        let mut invalid_diffs = Vec::new();
+
+        for entry in glob(&collection_fixture_glob()).expect("Failed to read glob pattern") {
+            let entry = entry.unwrap();
+            let path = entry.as_path();
+
+            println!("Testing if {:?} is deserializable", path);
+
+            let (api_filename, parsed_spec_json_str, spec_json_str) =
+                compare_spec_through_json(path, &save_path_base);
+
+            if parsed_spec_json_str != spec_json_str {
+                invalid_diffs.push((api_filename, parsed_spec_json_str, spec_json_str));
+            }
+        }
+
+        for invalid_diff in &invalid_diffs {
+            println!("File {} failed JSON comparison!", invalid_diff.0);
+        }
+        assert_eq!(invalid_diffs.len(), 0);
+    }
+
+    #[test]
+    fn detects_versions_for_sample_collections() {
+        let fixture_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests")
+            .join("fixtures")
+            .join("collection");
+
+        assert!(matches!(
+            from_path(fixture_root.join("swagger-petstore-v1.0.0.json")).unwrap(),
+            PostmanCollection::V1_0_0(_)
+        ));
+        assert!(matches!(
+            from_path(fixture_root.join("swagger-petstore-v2.0.0.json")).unwrap(),
+            PostmanCollection::V2_0_0(_)
+        ));
+        assert!(matches!(
+            from_path(fixture_root.join("swagger-petstore-v2.1.0.json")).unwrap(),
+            PostmanCollection::V2_1_0(_)
+        ));
+    }
 }

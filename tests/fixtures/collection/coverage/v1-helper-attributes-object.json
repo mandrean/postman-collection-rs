@@ -1,0 +1,22 @@
+{
+  "id": "collection-v1-object",
+  "name": "V1 Helper Attributes Object",
+  "order": [
+    "request-v1-object"
+  ],
+  "requests": [
+    {
+      "id": "request-v1-object",
+      "name": "Object helper attributes",
+      "headers": "",
+      "method": "GET",
+      "url": "https://example.com/object-helper",
+      "helperAttributes": {
+        "id": "basic",
+        "username": "alice",
+        "password": "secret",
+        "realm": "example"
+      }
+    }
+  ]
+}

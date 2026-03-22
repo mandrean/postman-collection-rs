@@ -1,0 +1,17 @@
+{
+  "id": "collection-v1-string",
+  "name": "V1 Helper Attributes String",
+  "order": [
+    "request-v1-string"
+  ],
+  "requests": [
+    {
+      "id": "request-v1-string",
+      "name": "String helper attributes",
+      "headers": "",
+      "method": "GET",
+      "url": "https://example.com/string-helper",
+      "helperAttributes": "legacy-helper-string"
+    }
+  ]
+}

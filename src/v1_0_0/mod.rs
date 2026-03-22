@@ -448,7 +448,7 @@ pub struct Request {
     /// A Postman request can have multiple responses associated with it. These responses are
     /// stored in this field.
     #[serde(rename = "responses")]
-    pub responses: Option<Vec<Option<Response>>>,
+    pub responses: Option<Vec<ResponseClass>>,
 
     #[serde(rename = "tests")]
     pub tests: Option<String>,
@@ -494,6 +494,9 @@ pub struct HeaderClass {
     /// You can associate descriptions with headers too.
     #[serde(rename = "description")]
     pub description: Option<String>,
+
+    #[serde(rename = "enabled")]
+    pub enabled: Option<bool>,
 
     /// Name of the header goes here. e.g: `Content-Type`
     #[serde(rename = "key")]
@@ -779,7 +782,7 @@ pub enum Header {
 pub enum HelperAttributes {
     String(String),
 
-    HelperClass(HelperClass),
+    Object(HashMap<String, serde_json::Value>),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
