@@ -25,10 +25,16 @@ jobs:
         run: cargo clippy --all-targets --all-features -- -D warnings
       - name: Test
         run: cargo test
+      - name: Test with all features
+        run: cargo test --all-features
       - name: Doc tests
         run: cargo test --doc
+      - name: Doc tests with all features
+        run: cargo test --doc --all-features
       - name: Build examples
         run: cargo build --examples
+      - name: Build examples with all features
+        run: cargo build --examples --all-features
 
   coverage:
     name: Coverage

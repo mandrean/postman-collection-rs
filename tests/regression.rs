@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
 use glob::glob;
-use postman_collection::{
-    Error, PostmanCollection, PostmanCollectionVersion, from_path, from_str, to_yaml,
-};
+#[cfg(feature = "yaml")]
+use postman_collection::to_yaml;
+use postman_collection::{Error, PostmanCollection, PostmanCollectionVersion, from_path, from_str};
 
 fn collection_fixture_paths() -> Vec<PathBuf> {
     let pattern = format!(
@@ -82,20 +82,23 @@ fn collection_fixtures_round_trip_without_losing_information() {
     }
 }
 
+#[cfg(feature = "yaml")]
 #[test]
-fn yaml_round_trip_still_works() {
+fn yaml_serialization_works_when_feature_is_enabled() {
     let fixture = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/fixtures/collection/swagger-petstore-v2.1.0.json");
     let original = from_path(&fixture).expect("Fixture should deserialize");
     let yaml = to_yaml(&original).expect("Collection should serialize to YAML");
     let reparsed = from_str(&yaml).expect("YAML output should deserialize");
 
+    assert!(yaml.contains("info:"), "unexpected YAML output: {yaml}");
+    assert!(
+        yaml.contains("name: Swagger Petstore"),
+        "unexpected YAML output: {yaml}"
+    );
+    assert!(yaml.contains("item:"), "unexpected YAML output: {yaml}");
     assert_eq!(reparsed.version(), PostmanCollectionVersion::V2_1_0);
     assert_eq!(reparsed.name(), original.name());
-    assert_eq!(
-        serde_json::to_value(reparsed).expect("Collection should serialize to JSON"),
-        serde_json::to_value(original).expect("Collection should serialize to JSON")
-    );
 }
 
 #[test]

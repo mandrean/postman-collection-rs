@@ -14,12 +14,20 @@ keywords = ["postman", "collection", "postman-collection", "serialization", "des
 [lints.rust]
 unsafe_code = "warn"
 
+[package.metadata.docs.rs]
+features = ["yaml"]
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = []
+yaml = ["dep:yaml_serde"]
+
 [dependencies]
-serde = { version = "1.0.228", default-features = false, features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149", features = ["raw_value"] }
-serde_yaml = "0.9.34"
 thiserror = "2.0.18"
 url = "2.5.8"
+yaml_serde = { version = "0.10.4", optional = true }
 
 [dev-dependencies]
 glob = "0.3.3"
